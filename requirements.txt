@@ -1,0 +1,11 @@
+numpy>=1.20,<2.0
+opencv-python>=4.5
+matplotlib==3.8.0
+scipy>=1.10
+torch>=2.0
+torchvision
+trimesh>=4.0
+xatlas>=0.0.11
+ninja>=1.10
+jupyter
+nvdiffrast@git+https://github.com/NVlabs/nvdiffrast.git
