@@ -1,57 +1,158 @@
+что и куда добавить если я все пиш в google collab # Tasks_3D_CV
 
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta content="origin" name="referrer">
-    <title>Forbidden &middot; GitHub</title>
-    <style type="text/css" media="screen">
-      body {
-        background-color: #f1f1f1;
-        margin: 0;
-      }
-      body,
-      input,
-      button {
-        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-      }
-      .container { margin: 30px auto 40px auto; width: 800px; text-align: center; }
-      a { color: #4183c4; text-decoration: none; font-weight: bold; }
-      a:hover { text-decoration: underline; }
-      h1, h2, h3 { color: #666; }
-      ul { list-style: none; padding: 25px 0; }
-      li {
-        display: inline;
-        margin: 10px 50px 10px 0px;
-      }
-      .logo { display: inline-block; margin-top: 35px; }
-      .logo-img-2x { display: none; }
-      @media
-      only screen and (-webkit-min-device-pixel-ratio: 2),
-      only screen and (   min--moz-device-pixel-ratio: 2),
-      only screen and (     -o-min-device-pixel-ratio: 2/1),
-      only screen and (        min-device-pixel-ratio: 2),
-      only screen and (                min-resolution: 192dpi),
-      only screen and (                min-resolution: 2dppx) {
-        .logo-img-1x { display: none; }
-        .logo-img-2x { display: inline-block; }
-      }
-    </style>
-  </head>
-  <body>
+Implementation of key 3D Computer Vision algorithms from scratch.
 
-    <div class="container">
-      <h1>Access to this site has been restricted.</h1>
+## Table of Contents
 
-      <p>
-        <br>
-        If you believe this is an error,
-        please contact <a href="https://support.github.com">Support</a>.
-      </p>
+| Task | Methods |
+|------|---------|
+| Camera Calibration (PnP) | DLT + Levenberg-Marquardt, factorization into K, R, t |
+| Structure from Motion | ORB, ratio test, RANSAC, Union-Find tracking, PnP |
+| Differentiable Rasterization | nvdiffrast, texture optimization |
+| NeRF | Positional encoding, volumetric rendering |
 
-      <div id="s">
-        <a href="https://githubstatus.com">GitHub Status</a> &mdash;
-        <a href="https://twitter.com/githubstatus">@githubstatus</a>
-      </div>
-    </div>
-  </body>
-</html>
+## Quick Start
+
+```bash
+git clone https://github.com/DARIMAYA/Tasks_3D_CV.git
+cd Tasks_3D_CV
+pip install -r requirements.txt
+```
+
+## Camera Calibration (PnP)
+
+**Goal:** Estimate projection matrix M from 2D-3D correspondences and decompose into K, R, t.
+
+**Steps:**
+1. Build linear system A·m = 0 (DLT)
+2. Find eigenvector for smallest eigenvalue
+3. Refine using Levenberg-Marquardt (reprojection error)
+4. Factorize M = K[R|t] using cv2.decomposeProjectionMatrix
+
+```python
+M = dlt_initialization(x3d, x2d)
+M_refined = levenberg_marquardt(M, x3d, x2d)
+K, R, t = factorize_projection_matrix(M_refined)
+```
+
+## Structure from Motion
+
+**Goal:** Recover camera trajectories from image sequence.
+
+**Pipeline:**
+- ORB feature detection with caching
+- Feature matching with Lowe's ratio test (0.75)
+- Fundamental matrix filtering with RANSAC (threshold=3.0px)
+- Track construction using Union-Find
+- Triangulation with reprojection error filtering (<10px)
+- PnP RANSAC for unknown camera poses
+
+
+## Differentiable Rasterization
+
+**Goal:** Optimize mesh texture so renders match real images.
+
+**Tech stack:** nvdiffrast, PyTorch
+
+```python
+texture = torch.full((512, 512, 3), 0.5, requires_grad=True, device="cuda")
+optimizer = torch.optim.Adam([texture], lr=1e-3)
+
+for iteration in range(1000):
+    rendered, _ = render_textured(mesh, mvp, texture=texture)
+    loss = F.mse_loss(rendered, target_image)
+    loss.backward()
+    optimizer.step()
+    texture.clamp_(0.0, 1.0)
+```
+
+**Result:** MSE < 0.0012 after 1000 iterations.
+
+## NeRF (Neural Radiance Fields)
+
+**Goal:** Learn continuous volumetric scene representation from images.
+
+**Architecture:**
+- Positional encoding (L=10)
+- MLP: 256 → 256 → 256 → 4 (RGB + sigma)
+- Volumetric rendering with 64 bins
+
+```python
+radiance_field = VanillaNeRF().cuda()
+
+for epoch in range(10):
+    for batch in dataloader:
+        pred = render_radiance_field(rays, radiance_field)
+        loss = F.mse_loss(pred, target)
+        loss.backward()
+        optimizer.step()
+```
+
+**Results after 10 epochs:** Clean 3D scene representation.
+
+## Results Summary
+
+| Method | Metric | Value |
+|--------|--------|-------|
+| DLT + LM | Reprojection error | < 0.5 px |
+| SfM | Recovered poses (out of 100) | ~95 |
+| Diff Rasterization | MSE after 1000 iters | 0.0011 |
+| Vanilla NeRF | Test MSE | 0.00013 |
+
+## Project Structure
+
+```
+Tasks_3D_CV/
+├── camera_calibration/     # PnP, DLT, factorization
+├── sfm/                    # ORB, tracks, PnP, trajectory
+├── diff_rasterization/     # nvdiffrast, texture optimization
+├── nerf/                   # NeRF, volumetric rendering
+└── requirements.txt
+```
+## Results
+
+Every folder (except `sfm/`) contains an `outputs/` subfolder with visual results:
+
+| Folder | What's in `outputs/` |
+|--------|----------------------|
+| `camera_calibration/` | `calibration_corners.png` - detected corners, `grid.png` - projected grid |
+| `diff_rasterization/` | `result_omtimization_texture.png` - optimized texture, `result_render_texture.png` - texture render | `total_result.png` - object render
+| `nerf/` | `nerf_epoch_1.png`, `final_result.png` - training results |
+
+**Example structure:**
+
+## Requirements
+
+- Python 3.12+
+- PyTorch 2.10+ with CUDA
+- OpenCV 4.10+
+- nvdiffrast
+- trimesh, xatlas, ninja
+
+```bash
+pip install numpy opencv-python matplotlib scipy torch torchvision trimesh xatlas ninja
+pip install git+https://github.com/NVlabs/nvdiffrast.git
+```
+
+## References
+
+- Hartley, Zisserman - "Multiple View Geometry"
+- Mildenhall et al. - "NeRF: Representing Scenes as Neural Radiance Fields"
+- NVlabs - nvdiffrast
+
+---
+
+## requirements.txt
+
+```txt
+numpy>=1.20
+opencv-python>=4.5
+matplotlib>=3.5
+scipy>=1.10
+torch>=2.0
+torchvision
+trimesh>=4.0
+xatlas>=0.0.11
+ninja>=1.10
+nvdiffrast@git+https://github.com/NVlabs/nvdiffrast.git
+```
