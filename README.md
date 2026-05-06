@@ -33,6 +33,7 @@ Implementation of key 3D Computer Vision algorithms from scratch.
 ```python
 !pip install numpy opencv-python matplotlib scipy torch torchvision trimesh xatlas ninja
 !pip install git+https://github.com/yzhq97/nvdiffrast.git
+```
 
 ## Quick Start
 
