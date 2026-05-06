@@ -11,6 +11,29 @@ Implementation of key 3D Computer Vision algorithms from scratch.
 | Differentiable Rasterization | nvdiffrast, texture optimization |
 | NeRF | Positional encoding, volumetric rendering |
 
+## Для работы в Google Colab
+
+**Все ноутбуки написаны и протестированы в Google Colab.** Рекомендуется запускать их там же.
+
+[Open In Colab](https://colab.research.google.com/)
+
+---
+
+## Быстрый старт в Google Colab
+
+1. Открой [Google Colab](https://colab.research.google.com/)
+2. Загрузи ноутбук: `File` → `Upload notebook` → выбери `.ipynb` файл
+3. Выбери среду с GPU: `Runtime` → `Change runtime type` → `T4 GPU` или `A100`
+4. Выполняй ячейки последовательно (`Shift + Enter`)
+
+### Важно для Colab:
+
+При каждом запуске Colab нужно установить библиотеки. Добавь в **первую ячейку** ноутбука:
+
+```python
+!pip install numpy opencv-python matplotlib scipy torch torchvision trimesh xatlas ninja
+!pip install git+https://github.com/yzhq97/nvdiffrast.git
+
 ## Quick Start
 
 ```bash
@@ -111,8 +134,6 @@ Tasks_3D_CV/
 ├── sfm/                    # ORB, tracks, PnP, trajectory
 ├── diff_rasterization/     # nvdiffrast, texture optimization
 ├── nerf/                   # NeRF, volumetric rendering
-├── data/                   # datasets
-├── lib/                    # helper code
 └── requirements.txt
 ```
 
