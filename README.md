@@ -17,6 +17,7 @@ Implementation of key 3D Computer Vision algorithms from scratch.
 git clone https://github.com/DARIMAYA/Tasks_3D_CV.git
 cd Tasks_3D_CV
 pip install -r requirements.txt
+```
 
 ## Camera Calibration (PnP)
 
@@ -133,7 +134,6 @@ pip install git+https://github.com/NVlabs/nvdiffrast.git
 - Hartley, Zisserman - "Multiple View Geometry"
 - Mildenhall et al. - "NeRF: Representing Scenes as Neural Radiance Fields"
 - NVlabs - nvdiffrast
-```
 
 ---
 
@@ -152,10 +152,3 @@ ninja>=1.10
 nvdiffrast@git+https://github.com/NVlabs/nvdiffrast.git
 ```
 
----
-
-## Short repository description (for GitHub About section)
-
-```
-Implementation of fundamental 3D Computer Vision algorithms from scratch: Camera Calibration (DLT + LM), Structure from Motion (ORB + PnP + RANSAC), Differentiable Rasterization (nvdiffrast), and NeRF.
-```
