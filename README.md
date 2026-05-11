@@ -1,17 +1,65 @@
-что и куда добавить если я все пиш в google collab # Tasks_3D_CV
+ # 3D Computer Vision From Scratch
 
-Implementation of key 3D Computer Vision algorithms from scratch.
+Implementation of core 3D Vision and Neural Rendering algorithms in PyTorch and OpenCV.
 
-## Table of Contents
+This repository includes:
 
-| Task | Methods |
-|------|---------|
-| Camera Calibration (PnP) | DLT + Levenberg-Marquardt, factorization into K, R, t |
-| Structure from Motion | ORB, ratio test, RANSAC, Union-Find tracking, PnP |
-| Differentiable Rasterization | nvdiffrast, texture optimization |
-| NeRF | Positional encoding, volumetric rendering |
+- Camera Calibration (PnP)
+- Structure from Motion (SfM)
+- Differentiable Rasterization
+- Neural Radiance Fields (NeRF)
 
-## Quick Start
+The project focuses on geometric computer vision, neural rendering, and differentiable graphics implemented from scratch for educational and research purposes.
+
+---
+
+# Preview
+
+## Neural Radiance Fields
+![NeRF](assets/nerf_preview.png)
+
+## Differentiable Rasterization
+![Texture Optimization](assets/texture_preview.png)
+
+## Camera Calibration
+![Calibration](assets/calibration_grid.png)
+
+---
+
+# Implemented Methods
+
+| Module | Key Methods |
+|---|---|
+| Camera Calibration | DLT, Levenberg-Marquardt, Projection Matrix Factorization |
+| Structure from Motion | ORB, Lowe Ratio Test, RANSAC, Triangulation, PnP |
+| Differentiable Rasterization | nvdiffrast, Texture Optimization, Differentiable Rendering |
+| Neural Radiance Fields | Positional Encoding, Volume Rendering, Neural Scene Representation |
+
+---
+
+# Motivation
+
+Modern AI systems increasingly combine computer vision, geometry, and neural rendering.
+
+The goal of this project was to better understand how 3D scenes can be reconstructed and represented using both classical geometric methods and modern neural approaches such as Neural Radiance Fields.
+
+All major components were implemented from scratch using NumPy, OpenCV, and PyTorch.
+
+---
+
+# Key Features
+
+- Implemented geometric vision algorithms from scratch
+- Built a full NeRF rendering pipeline in PyTorch
+- Implemented volumetric rendering and ray sampling
+- Worked with differentiable graphics using nvdiffrast
+- Reconstructed 3D scenes from multi-view images
+- Optimized camera poses using PnP and reprojection loss
+- Learned continuous scene representations with neural rendering
+
+---
+
+# Quick Start
 
 ```bash
 git clone https://github.com/DARIMAYA/Tasks_3D_CV.git
@@ -19,115 +67,294 @@ cd Tasks_3D_CV
 pip install -r requirements.txt
 ```
 
-## Camera Calibration (PnP)
+---
 
-**Goal:** Estimate projection matrix M from 2D-3D correspondences and decompose into K, R, t.
+# Camera Calibration (PnP)
 
-**Steps:**
-1. Build linear system A·m = 0 (DLT)
-2. Find eigenvector for smallest eigenvalue
-3. Refine using Levenberg-Marquardt (reprojection error)
-4. Factorize M = K[R|t] using cv2.decomposeProjectionMatrix
+Goal: Estimate the projection matrix from 2D-3D correspondences and decompose it into intrinsic and extrinsic camera parameters.
 
-```python
-M = dlt_initialization(x3d, x2d)
-M_refined = levenberg_marquardt(M, x3d, x2d)
-K, R, t = factorize_projection_matrix(M_refined)
-```
+Implemented from scratch using NumPy and OpenCV.
 
-## Structure from Motion
+## Pipeline
 
-**Goal:** Recover camera trajectories from image sequence.
+1. Build linear system:
 
-**Pipeline:**
-- ORB feature detection with caching
-- Feature matching with Lowe's ratio test (0.75)
-- Fundamental matrix filtering with RANSAC (threshold=3.0px)
+A · m = 0
+
+2. Estimate projection matrix using Direct Linear Transform (DLT)
+
+3. Refine camera matrix using Levenberg-Marquardt optimization
+
+4. Factorize projection matrix:
+
+M = K [R | t]
+
+where:
+
+- K — intrinsic camera matrix
+- R — rotation matrix
+- t — translation vector
+
+## Optimization Objective
+
+Reprojection error minimization:
+
+L(x_i, X_i) = Σ MX_i - x_i²
+
+## Results
+
+- Accurate camera calibration
+- Low reprojection error
+- Stable recovery of intrinsic parameters
+
+---
+
+# Structure from Motion (SfM)
+
+Goal: Recover camera trajectories and sparse 3D scene structure from image sequences.
+
+Implemented from scratch using OpenCV and NumPy.
+
+## Pipeline
+
+- ORB feature extraction
+- Feature matching using Lowe ratio test
+- Fundamental matrix estimation with RANSAC
 - Track construction using Union-Find
-- Triangulation with reprojection error filtering (<10px)
-- PnP RANSAC for unknown camera poses
+- Triangulation of 3D points
+- PnP pose estimation for unknown cameras
 
+## Features
 
-## Differentiable Rasterization
+- Feature caching for faster processing
+- Geometric outlier filtering
+- Reprojection error validation
+- Multi-view track reconstruction
 
-**Goal:** Optimize mesh texture so renders match real images.
+## Results
 
-**Tech stack:** nvdiffrast, PyTorch
+- Stable camera trajectory estimation
+- Sparse 3D reconstruction
+- Robust pose estimation under noisy matches
 
-```python
-texture = torch.full((512, 512, 3), 0.5, requires_grad=True, device="cuda")
-optimizer = torch.optim.Adam([texture], lr=1e-3)
+---
 
-for iteration in range(1000):
-    rendered, _ = render_textured(mesh, mvp, texture=texture)
-    loss = F.mse_loss(rendered, target_image)
-    loss.backward()
-    optimizer.step()
-    texture.clamp_(0.0, 1.0)
-```
+# Differentiable Rasterization
 
-**Result:** MSE < 0.0012 after 1000 iterations.
+Goal: Optimize mesh textures using differentiable rendering.
 
-## NeRF (Neural Radiance Fields)
+Implemented using PyTorch and nvdiffrast.
 
-**Goal:** Learn continuous volumetric scene representation from images.
+## Pipeline
 
-**Architecture:**
+- Rasterization of textured meshes
+- UV interpolation
+- Mipmap texture sampling
+- Gradient-based texture optimization
+- Anti-aliasing with differentiable rendering
+
+## Optimization
+Texture parameters are optimized directly using image reconstruction loss:
+
+loss = F.mse_loss(rendered_image, target_image)
+## Results
+
+- Successful texture reconstruction
+- Stable convergence during optimization
+- Final texture MSE below 0.0012
+
+---
+
+# Neural Radiance Fields (NeRF)
+
+Goal: Learn continuous volumetric scene representations from multi-view images.
+
+Implemented from scratch using PyTorch.
+
+## Implemented Components
+
+- Positional encoding
+- Ray generation
+- Volume rendering
+- Neural radiance field MLP
+- Neural optimization with gradient descent
+
+## Architecture
+
 - Positional encoding (L=10)
-- MLP: 256 → 256 → 256 → 4 (RGB + sigma)
-- Volumetric rendering with 64 bins
+- MLP:
+  - 256 → 256 → 256 → 4
+- RGB + density prediction
 
-```python
-radiance_field = VanillaNeRF().cuda()
+## Volume Rendering
 
-for epoch in range(10):
-    for batch in dataloader:
-        pred = render_radiance_field(rays, radiance_field)
-        loss = F.mse_loss(pred, target)
-        loss.backward()
-        optimizer.step()
-```
+NeRF integrates colors and densities along camera rays to synthesize novel views.
 
-**Results after 10 epochs:** Clean 3D scene representation.
+Volume rendering equation:
 
-## Results Summary
+C(r) = Σ T_i (1 - e^{-σ_i δ_i}) c_i
+
+where:
+
+- σ_i — density
+- c_i — color
+- T_i — accumulated transmittance
+
+## Results
+
+- Novel view synthesis
+- Continuous 3D scene representation
+- Test MSE ≈ 0.00013 after training
+
+---
+
+# Results Summary
 
 | Method | Metric | Value |
-|--------|--------|-------|
-| DLT + LM | Reprojection error | < 0.5 px |
-| SfM | Recovered poses (out of 100) | ~95 |
-| Diff Rasterization | MSE after 1000 iters | 0.0011 |
+|---|---|---|
+| Camera Calibration | Reprojection Error | < 0.5 px |
+| SfM | Recovered Poses | ~95 / 100 |
+| Differentiable Rasterization | Final MSE | 0.0011 |
 | Vanilla NeRF | Test MSE | 0.00013 |
+
+---
 
 ## Project Structure
 
 ```
 Tasks_3D_CV/
-├── camera_calibration/     # PnP, DLT, factorization
-├── sfm/                    # ORB, tracks, PnP, trajectory
-├── diff_rasterization/     # nvdiffrast, texture optimization
-├── nerf/                   # NeRF, volumetric rendering
-└── requirements.txt
+│
+├── camera_calibration/
+│   ├── camera_calibration.ipynb
+│   └── outputs/
+│       ├── calibration_corners.png
+│       └── grid.png
+│
+├── diff_rasterization/
+│   ├── diff_rasterization.ipynb
+│   └── outputs/
+│       ├── result_omtimization_texture.png
+│       ├── result_render_texture.png
+│       └── total_result.png
+│
+├── nerf/
+│   ├── nerf.ipynb
+│   └── outputs/
+│       ├── final_result.png
+│       └── nerf_epoch_1.png
+│
+├── sfm/
+│   ├── build.sh
+│   ├── description.pdf
+│   ├── estimate_trajectory.py
+│   ├── run.py
+│   ├── additonal_files/
+│   │   ├── generate_point_cloud.py
+│   │   └── common/
+│   │       ├── absolute_translational_error.py
+│   │       ├── dataset.py
+│   │       ├── intrinsics.py
+│   │       ├── point_cloud.py
+│   │       ├── relative_pose_error.py
+│   │       ├── testing.py
+│   │       ├── trajectory.py
+│   │       └── __init__.py
+│   └── public_tests/
+│       ├── 00_test_slam_gt/
+│       │   ├── depth.txt
+│       │   ├── ground_truth.txt
+│       │   ├── known_poses.txt
+│       │   └── depth/
+│       │       └── 000000.png ... 000099.png  (100 frames)
+│       ├── 00_test_slam_input/
+│       │   ├── intrinsics.txt
+│       │   ├── known_poses.txt
+│       │   ├── rgb.txt
+│       │   ├── rgb/
+│       │   │   └── 000050.png ... 000099.png  (50 frames)
+│       │   └── rgb_with_poses/
+│       │       └── 000000.png ... 000049.png  (50 frames)
+│       ├── 01_test_slam_gt/
+│       │   ├── depth.txt
+│       │   ├── ground_truth.txt
+│       │   ├── known_poses.txt
+│       │   └── depth/
+│       │       └── 000000.png ... 000099.png  (100 frames)
+│       ├── 01_test_slam_input/
+│       │   ├── intrinsics.txt
+│       │   ├── known_poses.txt
+│       │   ├── rgb.txt
+│       │   ├── rgb/
+│       │   │   └── 000050.png ... 000099.png  (50 frames)
+│       │   └── rgb_with_poses/
+│       │       └── 000000.png ... 000049.png  (50 frames)
+│       ├── 02_test_slam_gt/
+│       │   ├── depth.txt
+│       │   ├── ground_truth.txt
+│       │   ├── known_poses.txt
+│       │   └── depth/
+│       │       └── 000000.png ... 000099.png  (100 frames)
+│       └── 02_test_slam_input/
+│           ├── intrinsics.txt
+│           ├── known_poses.txt
+│           ├── rgb.txt
+│           ├── rgb/
+│           │   └── 000050.png ... 000099.png  (50 frames)
+│           └── rgb_with_poses/
+│               └── 000000.png ... 000049.png  (50 frames)
+│
+├── assets/
+│   ├── calibration_grid.png
+│   ├── nerf_preview.png
+│   └── texture_preview.png
+│
+├── requirements.txt
+├── README.md
+└── SOLUTION.md
 ```
-## Results
+# Results
 
-Every folder (except `sfm/`) contains an `outputs/` subfolder with visual results:
+Each module contains visual outputs and intermediate results.
 
-| Folder | What's in `outputs/` |
-|--------|----------------------|
-| `camera_calibration/` | `calibration_corners.png` - detected corners, `grid.png` - projected grid |
-| `diff_rasterization/` | `result_omtimization_texture.png` - optimized texture, `result_render_texture.png` - texture render | `total_result.png` - object render
-| `nerf/` | `nerf_epoch_1.png`, `final_result.png` - training results |
+## Camera Calibration
 
-**Example structure:**
+- detected corners
+- projected calibration grid
+- reprojection visualization
 
-## Requirements
+## Structure from Motion
 
-- Python 3.12+
-- PyTorch 2.10+ with CUDA
-- OpenCV 4.10+
+- feature matches
+- reconstructed camera poses
+- sparse point clouds
+
+## Differentiable Rasterization
+
+- optimized textures
+- rendered textured meshes
+- texture convergence results
+
+## NeRF
+
+- rendered training views
+- novel view synthesis
+- rendered scene representations
+
+---
+
+# Technologies
+
+- Python
+- PyTorch
+- OpenCV
+- NumPy
+- SciPy
 - nvdiffrast
-- trimesh, xatlas, ninja
+- trimesh
+- xatlas
+
+---
+
 
 ```bash
 pip install numpy opencv-python matplotlib scipy torch torchvision trimesh xatlas ninja
